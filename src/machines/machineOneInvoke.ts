@@ -55,7 +55,7 @@ export const machineOneInvoke = createMachine(
       },
     },
 
-    initial: "Closed",
+    initial: "Open",
 
     on: {
       "Task processing begins": {

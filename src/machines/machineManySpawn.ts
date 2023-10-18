@@ -61,7 +61,7 @@ export const machineManySpawn = createMachine(
       },
     },
 
-    initial: "Closed",
+    initial: "Open",
 
     on: {
       "Task processing begins": {

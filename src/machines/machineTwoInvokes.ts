@@ -65,7 +65,7 @@ export const machineTwoInvokes = createMachine(
       },
     },
 
-    initial: "Closed",
+    initial: "Open",
 
     on: {
       "Task processing begins": {
