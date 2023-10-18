@@ -1,16 +1,17 @@
-import { assign, createMachine, sendTo } from "xstate";
+import { assign, createMachine, sendTo, spawn } from "xstate";
 import { Task } from "../types";
 import { TaskQueueActorRef, taskQueue } from "./taskQueue";
 import { randomIntFromInterval } from "../utils";
 
-/** @xstate-layout N4IgpgJg5mDOIC5QBUDuB7ABASQHYDd0BrMAYmQENYjMAHAJ3QGM5YBLXKTAIzCg9gBtAAwBdRKFrp2AFzbpcEkAA9EAJgBsAOgCMAZj3CAnCaMBWAOxm9GgCwAaEAE9EAWjVqAHFq8a1FtWENYTUjTTUAXwjHNCw8QhJyKhoGZlYOLgAzCjYAG0gRcSQQKVl5RWLVBA1DLXMLI1sgowtPI08HZzc1Wx0tC2FhHR1Bo2EzTzMNCyiYjBwCYjJKajpGFlh2TkxYAFcmFkgCsSVStjkFJSqbMy1bMxMNI31hPSsLRxcEVwMLOp0NGYzDoHkY9G1PLMQLEFgkwFoAMK5aSQcjoKBQfKFU7Sc7lK7qV5aaY9AEaTwDYYBT6IfS2f5qHStV7mMzCVpQmHxJZaADytDAuFIAEEIBBMDJktjimcLhVQFUzL0fJ4vGM3hYNDoejSEADhP07OS2bZPB1hJNOfNuSQ+QKhch0ZiwNLJLi5QS9WEtHpbAN2VYdLY7B1dR4+qrbHopuznkMplFoiBcOgIHAlFzFiQcWVLpU3Kbde5bpZWjUo+SNNM7Fa4ln4UiURAc3i8wrEMJdUHbLXYTz+YKWx78wg3n0wiNhvogRZp13fcT7lGg+YdJ5hnpExEgA */
-export const machineTwoInvokes = createMachine(
+/** @xstate-layout N4IgpgJg5mDOIC5QFkCGA7AngAgMoAdUB3dAYgBVVYBrbfAJwHsBjOWAS3SmwCMwpOsANoAGALqJQ+RhwAu7RukkgAHogC0AFgB0ARl0BmEboCsugGy6ATOYMBOABwOANCEwarDk9qsmD5zxNzOzsTBwMAXwjXNCw8QhIKKloGFjZObgAzVHYAG0hRCSQQaTkFJWK1BBMRO20AgwMrTTsrZs0zTVd3BHVfEW0Adn1HEUGTO01xq0GomIwcAmIySho6JlZYDi5sWABXZlZIAvFlUvZ5RWUqm3Mhwat7TUeDQ0HBg26NZ51XuxEmoNnkEPnMQLFFgl0NoAMK5GSQCiMKBQfKFM4yC7la6IfQGeptMIOETNAwmTSacxfBC6QbaTQickOVp+QwOB5giHxZbaADy+DAZAAghAINhZMl0cVzpcKqAqv58b4zOY-JTGdZqbo7LptBrmVYAQ8ySYTJyFtySHyBStkaiwFKpJjZTiaQztPZhg5NLovEESVS3LjgtpyboSQYPnZ-GHzXEllb+YLSDD6GBULIwNgiIx6NQwPRHSVndjKogDFNQzYrI4rOHHuEukHes16v8niZBozBnZbFFoiB0IwIHBlFyE3Li2UrmXeuY7iIRPOjJTKUDO9T1KYHNodQ9LA9tQZiVY45CeXCERAMdPJ1UtzvF8uRKvzOuHtTvR7F532vZiRYZ6WtCSaTjKpbyogzR1I8wRki0LTmEuLjNkCu7qgC0Y6pYNj9hEQA */
+export const machineManySpawn = createMachine(
   {
-    id: "Two Invoke",
-    tsTypes: {} as import("./machineTwoInvokes.typegen").Typegen0,
+    id: "Many Spawn",
+    tsTypes: {} as import("./machineManySpawn.typegen").Typegen0,
 
     context: {
       tasks: [],
+      workers: [],
     },
 
     schema: {
@@ -19,6 +20,7 @@ export const machineTwoInvokes = createMachine(
           taskId: string;
           status: "idle" | "pending" | "success" | "failure";
         }[];
+        workers: TaskQueueActorRef[];
       },
       events: {} as
         | {
@@ -30,19 +32,9 @@ export const machineTwoInvokes = createMachine(
           }
         | { type: "Task processing begins"; taskId: string }
         | { type: "Task processing failed"; taskId: string }
-        | { type: "Task processing succeeded"; taskId: string },
+        | { type: "Task processing succeeded"; taskId: string }
+        | { type: "Create worker" },
     },
-
-    invoke: [
-      {
-        src: "Task queue",
-        id: "Task queue 1",
-      },
-      {
-        src: "Task queue",
-        id: "Task queue 2",
-      },
-    ],
 
     states: {
       Closed: {
@@ -61,6 +53,10 @@ export const machineTwoInvokes = createMachine(
           },
 
           Toggle: "Closed",
+
+          "Create worker": {
+            actions: "Spawn a task queue",
+          },
         },
       },
     },
@@ -80,15 +76,16 @@ export const machineTwoInvokes = createMachine(
         actions: "Assign new status to task in context",
       },
     },
+
+    entry: "Spawn a task queue",
   },
   {
     actions: {
       "Forward task to random task queue": sendTo(
-        () => {
-          return `Task queue ${randomIntFromInterval(
-            1,
-            2
-          )}` as unknown as TaskQueueActorRef;
+        (context) => {
+          return context.workers[
+            randomIntFromInterval(0, context.workers.length - 1)
+          ];
         },
         (_context, event) => ({
           type: "Add task to queue",
@@ -122,9 +119,14 @@ export const machineTwoInvokes = createMachine(
             } as const;
           }),
       }),
-    },
-    services: {
-      "Task queue": taskQueue,
+      "Spawn a task queue": assign({
+        workers: (context) =>
+          context.workers.concat(
+            spawn(taskQueue, {
+              name: `Task queue ${context.workers.length + 1}`,
+            })
+          ),
+      }),
     },
   }
 );

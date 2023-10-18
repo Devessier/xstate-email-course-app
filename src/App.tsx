@@ -18,6 +18,7 @@ import { useActor, useMachine } from "@xstate/react";
 import { machineOneInvoke } from "./machines/machineOneInvoke";
 import { TaskQueueActorRef } from "./machines/taskQueue";
 import { machineTwoInvokes } from "./machines/machineTwoInvokes";
+import { machineManySpawn } from "./machines/machineManySpawn";
 
 function TaskQueueStatus({
   actorRef,
@@ -186,6 +187,86 @@ function Panel2() {
   );
 }
 
+function Panel3() {
+  const [state, send] = useMachine(machineManySpawn);
+
+  return (
+    <Box>
+      <Text>
+        Current state of the queue: <Code>{String(state.value)}</Code>
+      </Text>
+
+      <HStack>
+        <Button
+          size="sm"
+          mt="4"
+          onClick={() => {
+            send({
+              type: "Toggle",
+            });
+          }}
+        >
+          Toggle state
+        </Button>
+
+        {state.matches("Open") ? (
+          <>
+            <Button
+              size="sm"
+              mt="4"
+              onClick={() => {
+                send({
+                  type: "Add task",
+                  task: {
+                    id: Math.random().toString(),
+                    payload: {
+                      fileContent: "content",
+                    },
+                  },
+                });
+              }}
+            >
+              Add task
+            </Button>
+
+            <Button
+              size="sm"
+              mt="4"
+              onClick={() => {
+                send({
+                  type: "Create worker",
+                });
+              }}
+            >
+              Create worker
+            </Button>
+          </>
+        ) : null}
+      </HStack>
+
+      <VStack alignItems="stretch" mt="12">
+        <Heading as="h2" fontWeight="semibold" fontSize="xl" mb="4">
+          Machine's tasks results
+        </Heading>
+
+        <Code whiteSpace="pre">
+          {JSON.stringify(state.context.tasks, null, 2)}
+        </Code>
+      </VStack>
+
+      <VStack alignItems="stretch" mt="12">
+        <Heading as="h2" fontWeight="semibold" fontSize="xl" mb="4">
+          Task queues
+        </Heading>
+
+        {state.context.workers.map((worker, index) => (
+          <TaskQueueStatus actorRef={worker} taskQueueId={String(index + 1)} />
+        ))}
+      </VStack>
+    </Box>
+  );
+}
+
 function App() {
   return (
     <ChakraProvider>
@@ -208,7 +289,7 @@ function App() {
                 <Panel2 />
               </TabPanel>
               <TabPanel>
-                <p>three!</p>
+                <Panel3 />
               </TabPanel>
             </TabPanels>
           </Tabs>
