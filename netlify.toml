@@ -1,0 +1,5 @@
+[[redirects]]
+  from = "/code"
+  to = "https://github.com/Devessier/xstate-email-course-app"
+  status = 301
+  force = true
