@@ -3,7 +3,7 @@ import { TaskQueueActorRef, taskQueue } from "./taskQueue";
 import { expect, test, vi } from "vitest";
 
 test("Waits for tasks", () => {
-  const mockedMachine = taskQueue.withConfig({
+  const mockedTaskQueue = taskQueue.withConfig({
     services: {
       "Process task": vi.fn().mockResolvedValue(undefined),
     },
@@ -11,7 +11,7 @@ test("Waits for tasks", () => {
 
   const rootMachine = createMachine({
     invoke: {
-      src: mockedMachine,
+      src: mockedTaskQueue,
       id: "taskQueue",
     },
     predictableActionArguments: true,
@@ -28,7 +28,7 @@ test("Waits for tasks", () => {
 test("Waits for task, processes it, and then goes back to Idle state", async () => {
   const processTaskFn = vi.fn().mockResolvedValue(undefined);
 
-  const mockedMachine = taskQueue.withConfig({
+  const mockedTaskQueue = taskQueue.withConfig({
     services: {
       "Process task": processTaskFn,
     },
@@ -36,7 +36,7 @@ test("Waits for task, processes it, and then goes back to Idle state", async () 
 
   const rootMachine = createMachine({
     invoke: {
-      src: mockedMachine,
+      src: mockedTaskQueue,
       id: "taskQueue",
     },
     predictableActionArguments: true,
@@ -69,7 +69,7 @@ test("Processes all pending tasks", async () => {
 
   const processTaskFn = vi.fn().mockResolvedValue(undefined);
 
-  const mockedMachine = taskQueue.withConfig({
+  const mockedTaskQueue = taskQueue.withConfig({
     services: {
       "Process task": processTaskFn,
     },
@@ -77,7 +77,7 @@ test("Processes all pending tasks", async () => {
 
   const rootMachine = createMachine({
     invoke: {
-      src: mockedMachine,
+      src: mockedTaskQueue,
       id: "taskQueue",
     },
     predictableActionArguments: true,
@@ -112,7 +112,7 @@ test("Does not crash when an error occurs during the processing", async () => {
     .fn()
     .mockRejectedValue(new Error("Failed to process the task"));
 
-  const mockedMachine = taskQueue.withConfig({
+  const mockedTaskQueue = taskQueue.withConfig({
     services: {
       "Process task": processTaskFn,
     },
@@ -120,7 +120,7 @@ test("Does not crash when an error occurs during the processing", async () => {
 
   const rootMachine = createMachine({
     invoke: {
-      src: mockedMachine,
+      src: mockedTaskQueue,
       id: "taskQueue",
     },
     predictableActionArguments: true,
@@ -151,7 +151,7 @@ test("Does not crash when an error occurs during the processing", async () => {
 test("Forwards pending status to the parent machine", async () => {
   const processTaskFn = vi.fn().mockResolvedValue(undefined);
 
-  const mockedMachine = taskQueue.withConfig({
+  const mockedTaskQueue = taskQueue.withConfig({
     services: {
       "Process task": processTaskFn,
     },
@@ -161,7 +161,7 @@ test("Forwards pending status to the parent machine", async () => {
 
   const rootMachine = createMachine({
     invoke: {
-      src: mockedMachine,
+      src: mockedTaskQueue,
       id: "taskQueue",
     },
     predictableActionArguments: true,
@@ -202,7 +202,7 @@ test("Forwards pending status to the parent machine", async () => {
 test("Forwards success status to the parent machine", async () => {
   const processTaskFn = vi.fn().mockResolvedValue(undefined);
 
-  const mockedMachine = taskQueue.withConfig({
+  const mockedTaskQueue = taskQueue.withConfig({
     services: {
       "Process task": processTaskFn,
     },
@@ -212,7 +212,7 @@ test("Forwards success status to the parent machine", async () => {
 
   const rootMachine = createMachine({
     invoke: {
-      src: mockedMachine,
+      src: mockedTaskQueue,
       id: "taskQueue",
     },
     predictableActionArguments: true,
@@ -256,7 +256,7 @@ test("Forwards failure status to the parent machine", async () => {
     .fn()
     .mockRejectedValue(new Error("Failed to process the task"));
 
-  const mockedMachine = taskQueue.withConfig({
+  const mockedTaskQueue = taskQueue.withConfig({
     services: {
       "Process task": processTaskFn,
     },
@@ -266,7 +266,7 @@ test("Forwards failure status to the parent machine", async () => {
 
   const rootMachine = createMachine({
     invoke: {
-      src: mockedMachine,
+      src: mockedTaskQueue,
       id: "taskQueue",
     },
     predictableActionArguments: true,
