@@ -28,9 +28,11 @@ export const machineTwoInvokes = createMachine(
         | {
             type: "Toggle";
           }
-        | { type: "Task processing begins"; taskId: string }
-        | { type: "Task processing failed"; taskId: string }
-        | { type: "Task processing succeeded"; taskId: string },
+        | {
+            type: "Update task status";
+            taskId: string;
+            status: "pending" | "success" | "failure";
+          },
     },
 
     invoke: [
@@ -68,15 +70,7 @@ export const machineTwoInvokes = createMachine(
     initial: "Open",
 
     on: {
-      "Task processing begins": {
-        actions: "Assign new status to task in context",
-      },
-
-      "Task processing failed": {
-        actions: "Assign new status to task in context",
-      },
-
-      "Task processing succeeded": {
+      "Update task status": {
         actions: "Assign new status to task in context",
       },
     },
@@ -111,14 +105,7 @@ export const machineTwoInvokes = createMachine(
 
             return {
               taskId: task.taskId,
-              status:
-                event.type === "Task processing begins"
-                  ? "pending"
-                  : event.type === "Task processing succeeded"
-                  ? "success"
-                  : event.type === "Task processing failed"
-                  ? "failure"
-                  : "idle",
+              status: event.status,
             } as const;
           }),
       }),
